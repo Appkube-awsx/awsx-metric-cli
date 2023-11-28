@@ -2,7 +2,7 @@ package command
 
 import (
 	"github.com/Appkube-awsx/awsx-common/authenticate"
-	"github.com/Appkube-awsx/awsx-metric/controller"
+	"github.com/Appkube-awsx/awsx-metric-cli/controller"
 	"github.com/spf13/cobra"
 	"log"
 	"os"

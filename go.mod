@@ -1,4 +1,4 @@
-module github.com/Appkube-awsx/awsx-metric
+module github.com/Appkube-awsx/awsx-metric-cli
 
 go 1.19
 
