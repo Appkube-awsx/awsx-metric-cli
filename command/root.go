@@ -23,9 +23,15 @@ var AwsxCloudWatchMetricsCmd = &cobra.Command{
 		}
 		if authFlag {
 			// Retrieve JSON input from command-line flag
-			query, err := cmd.Flags().GetString("query")
+
+			query, err := cmd.PersistentFlags().GetString("query")
 			if err != nil {
 				log.Println("Error retrieving JSON input: %v", err)
+				cmd.Help()
+				return
+			}
+			if query == "" {
+				log.Println("cloud-watch query not provided. program exit")
 				cmd.Help()
 				return
 			}
