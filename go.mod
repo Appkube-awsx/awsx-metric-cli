@@ -3,7 +3,7 @@ module github.com/Appkube-awsx/awsx-metric
 go 1.19
 
 require (
-	github.com/Appkube-awsx/awsx-common v1.2.0
+	github.com/Appkube-awsx/awsx-common v1.2.2
 	github.com/aws/aws-sdk-go v1.44.246
 	github.com/spf13/cobra v1.7.0
 )

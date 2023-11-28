@@ -14,7 +14,6 @@ import (
 	"github.com/Appkube-awsx/awsx-metric/models"
 	"github.com/spf13/cobra"
 	"log"
-	"net/http"
 	"os"
 	"time"
 )
@@ -25,112 +24,26 @@ var AwsxCloudWatchMetricsCmd = &cobra.Command{
 	Long:  `getAwsCloudWatchMetrics command gets cloudwatch metrics data`,
 
 	Run: func(cmd *cobra.Command, args []string) {
-		cloudElementId, err := cmd.Flags().GetString("cloudElementId")
+
+		authFlag, clientAuth, err := authenticate.CommandAuth(cmd)
 		if err != nil {
-			log.Fatalf("Error while getting cloudElementId command line parameter. Error %v", err)
+			log.Fatalf("Error during authentication: %v", err)
 			cmd.Help()
 			return
 		}
-		if cloudElementId != "" {
-			cmdbCloudElementApiUrl, err := cmd.Flags().GetString("cmdbCloudElementApiUrl")
+		if authFlag {
+			// Retrieve JSON input from command-line flag
+			query, err := cmd.Flags().GetString("query")
 			if err != nil {
-				log.Fatalf("Error while getting cmdbCloudElementApiUrl command line parameter. Error %v", err)
+				log.Fatalf("Error retrieving JSON input: %v", err)
 				cmd.Help()
 				return
 			}
-			if cmdbCloudElementApiUrl == "" {
-				log.Fatalf("cmdb cloud-element url not provided")
-				cmd.Help()
-				return
-			}
-
-			cmdbCloudCredsApiUrl, err := cmd.Flags().GetString("cmdbCloudCredsApiUrl")
-			if err != nil {
-				log.Fatalf("Error while getting cmdbCloudCredsApiUrl command line parameter. Error %v", err)
-				cmd.Help()
-				return
-			}
-			if cmdbCloudCredsApiUrl == "" {
-				log.Fatalf("cmdb cloud credential url not provided")
-				cmd.Help()
-				return
-			}
-			cmdbResp, cmdbStatusCode, _, err := getCmdbData(cloudElementId, cmdbCloudElementApiUrl)
-			if err != nil {
-				fmt.Println("error in cmdb cloud-element api call", "error", err.Error())
-				return
-			}
-			if cmdbStatusCode >= http.StatusBadRequest {
-				fmt.Println("CMDB cloud-element api call failed", "error", err.Error())
-				return
-			}
-			vaultResp, vaultStatusCode, _, err := getAwsCredentials(cmdbResp.LandingzoneId, cmdbCloudCredsApiUrl)
-			if err != nil {
-				fmt.Println("error in cmdb cloud-creds api call", "error", err.Error())
-				return
-			}
-			if vaultStatusCode >= http.StatusBadRequest {
-				fmt.Println("CMDB cloud-creds api call failed", "error", err.Error())
-				return
-			}
-			// create new cmd and set vaultResp acess key secret key
-			//dCmd := dynamicCmd("zone", vaultResp.Region)
-			dCmd := &cobra.Command{}
-
-			dCmd.PersistentFlags().String("zone", vaultResp.Region, "aws region")
-			dCmd.PersistentFlags().String("accessKey", vaultResp.AccessKey, "aws access key")
-			dCmd.PersistentFlags().String("secretKey", vaultResp.SecretKey, "aws secret key")
-			dCmd.PersistentFlags().String("crossAccountRoleArn", vaultResp.CrossAccountRoleArn, "aws cross account role arn")
-			dCmd.PersistentFlags().String("externalId", vaultResp.ExternalId, "aws external id")
-
-			authFlag, clientAuth, err := authenticate.CommandAuth(dCmd)
-			if err != nil {
-				log.Fatalf("Error during authentication: %v", err)
-				cmd.Help()
-				return
-			}
-			if authFlag {
-				// Retrieve JSON input from command-line flag
-				jsonInput, err := cmd.Flags().GetString("jsonInput")
-				if err != nil {
-					log.Fatalf("Error retrieving JSON input: %v", err)
-					cmd.Help()
-					return
-				}
-				// Call GetMetricData with clientAuth, JSON input, and dimensions
-				if err := controller.GetMetricData(*clientAuth, jsonInput); err != nil {
-					log.Fatalf("Error getting metric data: %v", err)
-				}
-			} else {
-				cmd.Help()
-				return
-			}
-
-		} else {
-			authFlag, clientAuth, err := authenticate.CommandAuth(cmd)
-			if err != nil {
-				log.Fatalf("Error during authentication: %v", err)
-				cmd.Help()
-				return
-			}
-			if authFlag {
-				// Retrieve JSON input from command-line flag
-				jsonInput, err := cmd.Flags().GetString("jsonInput")
-				if err != nil {
-					log.Fatalf("Error retrieving JSON input: %v", err)
-					cmd.Help()
-					return
-				}
-				// Call GetMetricData with clientAuth, JSON input, and dimensions
-				if err := controller.GetMetricData(*clientAuth, jsonInput); err != nil {
-					log.Fatalf("Error getting metric data: %v", err)
-				}
-			} else {
-				cmd.Help()
-				return
+			// Call GetMetricData with clientAuth, JSON input, and dimensions
+			if err := controller.GetMetricData(*clientAuth, query); err != nil {
+				log.Fatalf("Error getting metric data: %v", err)
 			}
 		}
-
 	},
 }
 
@@ -219,6 +132,8 @@ func getAwsCredentials(landingZoneId int64, cmdbLandingCloudCredsApiUrl string) 
 }
 
 func init() {
+	AwsxCloudWatchMetricsCmd.PersistentFlags().String("cloudElementId", "", "cloud element id")
+	AwsxCloudWatchMetricsCmd.PersistentFlags().String("cloudElementApiUrl", "", "cloud element api")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("vaultUrl", "", "vault end point")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("vaultToken", "", "vault token")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("accountId", "", "aws account number")
@@ -227,10 +142,7 @@ func init() {
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("secretKey", "", "aws secret key")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("crossAccountRoleArn", "", "aws cross account role arn")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("externalId", "", "aws external id")
-	AwsxCloudWatchMetricsCmd.Flags().String("jsonInput", "", "JSON input for dynamic metric queries")
-	AwsxCloudWatchMetricsCmd.Flags().String("cloudElementId", "", "cloud element id")
-	AwsxCloudWatchMetricsCmd.Flags().String("cmdbCloudElementApiUrl", "", "cmdb cloud element api")
-	AwsxCloudWatchMetricsCmd.Flags().String("cmdbCloudCredsApiUrl", "", "cloud cloud credential api")
+	AwsxCloudWatchMetricsCmd.PersistentFlags().String("query", "", "dynamic metric queries")
 
 	// Use ParseFlags instead of PersistentFlags().Parse
 	if err := AwsxCloudWatchMetricsCmd.ParseFlags(os.Args[1:]); err != nil {
