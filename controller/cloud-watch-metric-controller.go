@@ -37,7 +37,7 @@ type OuterQuery struct {
 	Query        []InnerQuery `json:"Query"`
 }
 
-func GetMetricData(clientAuth client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
+func GetMetricData(clientAuth *client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
 	var outerQuery []OuterQuery
 	err := json.Unmarshal([]byte(cloudWatchQueries), &outerQuery)
 	if err != nil {
@@ -70,7 +70,7 @@ func GetMetricData(clientAuth client.Auth, cloudWatchQueries string) (*cloudwatc
 		}
 	}
 
-	cloudWatchClient := client.GetClient(clientAuth, client.CLOUDWATCH).(*cloudwatch.CloudWatch)
+	cloudWatchClient := client.GetClient(*clientAuth, client.CLOUDWATCH).(*cloudwatch.CloudWatch)
 
 	// Specify the request input with multiple queries
 	input := &cloudwatch.GetMetricDataInput{
