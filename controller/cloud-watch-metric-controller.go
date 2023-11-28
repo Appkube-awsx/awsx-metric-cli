@@ -6,6 +6,7 @@ import (
 	"github.com/Appkube-awsx/awsx-common/client"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"strings"
 	"time"
 )
 
@@ -20,8 +21,7 @@ type TimeRange struct {
 	TimeZone string `json:"TimeZone"`
 }
 
-type QueryInput struct {
-	RefID      string      `json:"RefID"`
+type InnerQuery struct {
 	Namespace  string      `json:"Namespace"`
 	MetricName string      `json:"MetricName"`
 	Period     int64       `json:"Period"`
@@ -29,32 +29,32 @@ type QueryInput struct {
 	Dimensions []Dimension `json:"Dimensions"`
 }
 
-type MetricQueryInputV2 struct {
+type OuterQuery struct {
 	RefID        string       `json:"RefID"`
 	MaxDataPoint int          `json:"MaxDataPoint"`
 	Interval     int          `json:"Interval"`
 	TimeRange    TimeRange    `json:"TimeRange"`
-	Query        []QueryInput `json:"Query"`
+	Query        []InnerQuery `json:"Query"`
 }
 
-func GetMetricData(clientAuth client.Auth, jsonInput string) *cloudwatch.GetMetricDataOutput {
-	var metricQueriesV2 []MetricQueryInputV2
-	err := json.Unmarshal([]byte(jsonInput), &metricQueriesV2)
+func GetMetricData(clientAuth client.Auth, cloudWatchQueries string) *cloudwatch.GetMetricDataOutput {
+	var outerQuery []OuterQuery
+	err := json.Unmarshal([]byte(cloudWatchQueries), &outerQuery)
 	if err != nil {
 		fmt.Println("Error parsing JSON input:", err)
 		return nil
 	}
 
 	// Create the metric queries dynamically
-	queries := make([]*cloudwatch.MetricDataQuery, len(metricQueriesV2))
-	for i, queryInputV2 := range metricQueriesV2 {
-		for _, queryInput := range queryInputV2.Query {
+	queries := make([]*cloudwatch.MetricDataQuery, len(outerQuery))
+	for i, outerQueryInput := range outerQuery {
+		for _, queryInput := range outerQueryInput.Query {
 			if queryInput.Dimensions == nil {
 				queryInput.Dimensions = make([]Dimension, 0)
 			}
 
 			query := &cloudwatch.MetricDataQuery{
-				Id:         aws.String(fmt.Sprintf(queryInput.RefID)),
+				Id:         aws.String(strings.ToLower(outerQueryInput.RefID)),
 				ReturnData: aws.Bool(true),
 				MetricStat: &cloudwatch.MetricStat{
 					Metric: &cloudwatch.Metric{

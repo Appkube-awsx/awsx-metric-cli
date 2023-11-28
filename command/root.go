@@ -24,19 +24,19 @@ var AwsxCloudWatchMetricsCmd = &cobra.Command{
 		if authFlag {
 			// Retrieve JSON input from command-line flag
 
-			query, err := cmd.PersistentFlags().GetString("query")
+			cloudWatchQueries, err := cmd.PersistentFlags().GetString("cloudWatchQueries")
 			if err != nil {
 				log.Println("Error retrieving JSON input: %v", err)
 				cmd.Help()
 				return
 			}
-			if query == "" {
+			if cloudWatchQueries == "" {
 				log.Println("cloud-watch query not provided. program exit")
 				cmd.Help()
 				return
 			}
 			// Call GetMetricData with clientAuth, JSON input, and dimensions
-			if err := controller.GetMetricData(*clientAuth, query); err != nil {
+			if err := controller.GetMetricData(*clientAuth, cloudWatchQueries); err != nil {
 				log.Println("Error getting metric data: %v", err)
 			}
 		}
@@ -60,7 +60,7 @@ func init() {
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("secretKey", "", "aws secret key")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("crossAccountRoleArn", "", "aws cross account role arn")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("externalId", "", "aws external id")
-	AwsxCloudWatchMetricsCmd.PersistentFlags().String("query", "", "aws cloudwatch metric queries")
+	AwsxCloudWatchMetricsCmd.PersistentFlags().String("cloudWatchQueries", "", "aws cloudwatch metric queries")
 
 	// Use ParseFlags instead of PersistentFlags().Parse
 	if err := AwsxCloudWatchMetricsCmd.ParseFlags(os.Args[1:]); err != nil {
