@@ -36,9 +36,13 @@ var AwsxCloudWatchMetricsCmd = &cobra.Command{
 				return
 			}
 			// Call GetMetricData with clientAuth, JSON input, and dimensions
-			if err := controller.GetMetricData(*clientAuth, cloudWatchQueries); err != nil {
+			res, err := controller.GetMetricData(*clientAuth, cloudWatchQueries)
+
+			if err != nil {
 				log.Println("Error getting metric data: %v", err)
+				return
 			}
+			log.Println(res)
 		}
 	},
 }

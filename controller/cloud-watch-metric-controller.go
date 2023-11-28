@@ -37,12 +37,12 @@ type OuterQuery struct {
 	Query        []InnerQuery `json:"Query"`
 }
 
-func GetMetricData(clientAuth client.Auth, cloudWatchQueries string) *cloudwatch.GetMetricDataOutput {
+func GetMetricData(clientAuth client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
 	var outerQuery []OuterQuery
 	err := json.Unmarshal([]byte(cloudWatchQueries), &outerQuery)
 	if err != nil {
 		fmt.Println("Error parsing JSON input:", err)
-		return nil
+		return nil, err
 	}
 
 	// Create the metric queries dynamically
@@ -83,7 +83,7 @@ func GetMetricData(clientAuth client.Auth, cloudWatchQueries string) *cloudwatch
 	result, err := cloudWatchClient.GetMetricData(input)
 	if err != nil {
 		fmt.Println("Error:", err)
-		return nil
+		return nil, err
 	}
 
 	// Process the result
@@ -93,7 +93,7 @@ func GetMetricData(clientAuth client.Auth, cloudWatchQueries string) *cloudwatch
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 // Existing buildDimensions function...
