@@ -3,7 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Appkube-awsx/awsx-common/client"
+	"github.com/Appkube-awsx/awsx-metric-cli/client"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"strings"
@@ -126,7 +126,7 @@ func GetMetricDataWithSingleQuery(clientAuth *client.Auth, cloudWatchQueries str
 		}
 		queries[0] = query
 	}
-	
+
 	cloudWatchClient := client.GetClient(*clientAuth, client.CLOUDWATCH).(*cloudwatch.CloudWatch)
 
 	// Specify the request input with multiple queries

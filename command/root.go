@@ -1,7 +1,7 @@
 package command
 
 import (
-	"github.com/Appkube-awsx/awsx-common/authenticate"
+	"github.com/Appkube-awsx/awsx-metric-cli/auth"
 	"github.com/Appkube-awsx/awsx-metric-cli/controller"
 	"github.com/spf13/cobra"
 	"log"
@@ -15,7 +15,7 @@ var AwsxCloudWatchMetricsCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		authFlag, clientAuth, err := authenticate.CommandAuth(cmd)
+		var authFlag, clientAuth, err = authenticate.CommandAuth(cmd)
 		if err != nil {
 			log.Println("Error during authentication: %v", err)
 			cmd.Help()
