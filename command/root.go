@@ -2,10 +2,10 @@ package command
 
 import (
 	"github.com/Appkube-awsx/awsx-metric-cli/auth"
+	"github.com/Appkube-awsx/awsx-metric-cli/command/encryptdecrypt"
 	"github.com/Appkube-awsx/awsx-metric-cli/controller"
 	"github.com/spf13/cobra"
 	"log"
-	"os"
 )
 
 var AwsxCloudWatchMetricsCmd = &cobra.Command{
@@ -54,6 +54,7 @@ func Execute() {
 }
 
 func init() {
+	AwsxCloudWatchMetricsCmd.AddCommand(encryptdecrypt.EncryptDecrypt)
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("cloudElementId", "", "cloud element id")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("cloudElementApiUrl", "", "cloud element api")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("vaultUrl", "", "vault end point")
@@ -66,8 +67,4 @@ func init() {
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("externalId", "", "aws external id")
 	AwsxCloudWatchMetricsCmd.PersistentFlags().String("cloudWatchQueries", "", "aws cloudwatch metric queries")
 
-	// Use ParseFlags instead of PersistentFlags().Parse
-	if err := AwsxCloudWatchMetricsCmd.ParseFlags(os.Args[1:]); err != nil {
-		log.Println("error parsing flags: %v", err)
-	}
 }

@@ -94,12 +94,12 @@ func AuthenticateDataEnv(cloudElementId string, cloudElementApiUrl string, vault
 	vaultResp, err := vault.GetAccountDetails(vaultUrl, vaultToken, "GLOBAL_ACCESS_SECRET_AWS")
 	if err != nil {
 		log.Println("call to vault api failed. \n", err)
-		key := []byte("0123456789012345")
-		decryptedAccessKey, err := decrypt(key, "MDEyMzQ1Njc4OTAxMjM0NR42uf4kDboNvrv3zTXgdmH+rdhE")
+		key := []byte("qwertyuioplkjhgfdsa1234!@MNB?>P)")
+		decryptedAccessKey, err := decrypt(key, "cXdlcnR5dWlvcGxramhnZg9xwxCE6a73juwgeyrAwkSWCLlY")
 		if err != nil {
 			log.Fatal("Error decrypting access key:", err)
 		}
-		decryptedSecrtKey, err := decrypt(key, "MDEyMzQ1Njc4OTAxMjM0NTtEhtZZaO5loLf0q2XWanrLjYTZfEoH2T0Mi3O+986g6DzTmorfxbw=")
+		decryptedSecrtKey, err := decrypt(key, "cXdlcnR5dWlvcGxramhnZioD/Dj5jPqfkOAjHXr23l9mGA8fh/0M83gZMukSd5NTYlIwSd8o24o=")
 		if err != nil {
 			log.Fatal("Error decrypting secret key:", err)
 		}
