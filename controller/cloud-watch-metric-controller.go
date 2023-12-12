@@ -153,8 +153,6 @@ func GetMetricDataWithSingleQuery(clientAuth *client.Auth, cloudWatchQueries str
 	return result, nil
 }
 
-// Existing buildDimensions function...
-
 func buildDimensions(dimensions []Dimension) []*cloudwatch.Dimension {
 	var cloudWatchDimensions []*cloudwatch.Dimension
 	for _, d := range dimensions {

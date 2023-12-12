@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"net/http"
+	"os"
 )
 
 func AuthenticateData(cloudElementId string, cloudElementApiUrl string, vaultUrl string, vaultToken string, accountNo string, region string, acKey string, secKey string, crossAccountRoleArn string, externalId string) (bool, *client.Auth, error) {
@@ -91,17 +92,27 @@ func AuthenticateDataEnv(cloudElementId string, cloudElementApiUrl string, vault
 
 	log.Println("corss arn provided. getting user credentials. corss arn: " + crossAccountRoleArn)
 	clientAuth := client.Auth{}
+	var decryptedAccessKey = ""
+	var decryptedSecrtKey = ""
 	vaultResp, err := vault.GetAccountDetails(vaultUrl, vaultToken, "GLOBAL_ACCESS_SECRET_AWS")
 	if err != nil {
 		log.Println("call to vault api failed. \n", err)
 		key := []byte("qwertyuioplkjhgfdsa1234!@MNB?>P)")
-		decryptedAccessKey, err := decrypt(key, "cXdlcnR5dWlvcGxramhnZg9xwxCE6a73juwgeyrAwkSWCLlY")
+		decryptedAccessKey, err = decrypt(key, "cXdlcnR5dWlvcGxramhnZg9xwxCE6a73juwgeyrAwkSWCLlY")
 		if err != nil {
 			log.Fatal("Error decrypting access key:", err)
 		}
-		decryptedSecrtKey, err := decrypt(key, "cXdlcnR5dWlvcGxramhnZioD/Dj5jPqfkOAjHXr23l9mGA8fh/0M83gZMukSd5NTYlIwSd8o24o=")
+		decryptedSecrtKey, err = decrypt(key, "cXdlcnR5dWlvcGxramhnZioD/Dj5jPqfkOAjHXr23l9mGA8fh/0M83gZMukSd5NTYlIwSd8o24o=")
 		if err != nil {
 			log.Fatal("Error decrypting secret key:", err)
+		}
+		fmt.Println("decryptedSecrtKeydecryptedSecrtKeydecryptedSecrtKey", decryptedSecrtKey)
+
+		if decryptedAccessKey == "" {
+			decryptedAccessKey = os.Getenv("API_KEY")
+		}
+		if decryptedSecrtKey == "" {
+			decryptedSecrtKey = os.Getenv("SECRET_KEY")
 		}
 
 		clientAuth.CrossAccountRoleArn = crossAccountRoleArn
@@ -177,24 +188,22 @@ func SubCommandAuth(cmd *cobra.Command) (bool, *client.Auth, error) {
 }
 
 func decrypt(key []byte, ciphertext string) (string, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
+	if ciphertext != "" {
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			return "", err
+		}
+		decodedCiphertext, err := base64.StdEncoding.DecodeString(ciphertext)
+		if err != nil {
+			return "", err
+		}
+		if len(decodedCiphertext) < aes.BlockSize {
+			return "", fmt.Errorf("ciphertext too short")
+		}
+		iv := decodedCiphertext[:aes.BlockSize]
+		decodedCiphertext = decodedCiphertext[aes.BlockSize:]
+		cipher.NewCFBDecrypter(block, iv).XORKeyStream(decodedCiphertext, decodedCiphertext)
+		return string(decodedCiphertext), nil
 	}
-
-	decodedCiphertext, err := base64.StdEncoding.DecodeString(ciphertext)
-	if err != nil {
-		return "", err
-	}
-
-	if len(decodedCiphertext) < aes.BlockSize {
-		return "", fmt.Errorf("ciphertext too short")
-	}
-
-	iv := decodedCiphertext[:aes.BlockSize]
-	decodedCiphertext = decodedCiphertext[aes.BlockSize:]
-
-	cipher.NewCFBDecrypter(block, iv).XORKeyStream(decodedCiphertext, decodedCiphertext)
-
-	return string(decodedCiphertext), nil
+	return "", nil
 }
