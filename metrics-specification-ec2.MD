@@ -1,3 +1,5 @@
+NOTE - Pass an instance flag for all instances or specific instance, along with other params
+
 1. CPU utilization panel, - Metric Namespace - CPUUtilization, Stat Average(5m), Average(24Hours), Maximum(24h), Units - %, Dimmensions - All instances
 
 execution - awsx-metric-cli cpuutilization --acKey= " " --secKey= " " crossaccount = " " zone = " " externalID = " " 
