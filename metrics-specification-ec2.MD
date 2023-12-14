@@ -97,3 +97,23 @@ Note - This a cw agent metric, The only statistic that should be used for this m
 
 execution - awsx-metric-cli Net_outBytes --acKey= " " --secKey= " " crossaccount = " " zone = " " externalID = " "
 
+--> Availability dashboard -- 
+
+19. Instance status panel - Custom API's 
+(i)   DescribeInstanceStatus - This will retrieve the instance status and Availability zone
+(ii)  DescribeInstance -  This will get the metadata for an instance but we have to only parse the instance type
+(iii) DescribeAlarms - This is a cloudwatch API where we can describe alarms for an instance if attached. 
+
+execution - awsx-metric-cli Instancestatus --acKey = " " --secKey = " " --externalId = " " --crossaccountrolearn = " " --zone = " " --instanceID = " " 
+
+20. Alerts and Notifications - Custom API
+(i) DescribeAlarms - This will retrieve the information for alerts and only parse Date, Alarm Name & description.
+
+execution - awsx-metric-cli AlertsandNotifications --acKey = " " --secKey = " " --externalId = " " --crossaccountrolearn = " " --zone = " " --instanceID = " "
+
+21. Instances Health Check - Custom API
+(i)  Describe instances - This API will provide metadata of an ec2 instance we have to parse Availability zone, instance ID, instance type and instance state.
+(ii) DescribeInstanceStatus - This will retrieve the instance status which is system check in ec2 design.
+
+execution - awsx-metric-cli HealthCheck --acKey = " " --secKey = " " --externalId = " " --crossaccountrolearn = " " --zone = " " --instanceID = " "
+
