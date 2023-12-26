@@ -6,6 +6,7 @@ import (
 	ec2 "github.com/Appkube-awsx/awsx-metric-cli/EC2/CPUUtilization"
 	"github.com/Appkube-awsx/awsx-metric-cli/auth"
 	"github.com/Appkube-awsx/awsx-metric-cli/command/encryptdecrypt"
+	"github.com/Appkube-awsx/awsx-metric-cli/controller"
 	"github.com/spf13/cobra"
 	"log"
 )
@@ -83,7 +84,12 @@ var AwsxCloudWatchMetricsCmd = &cobra.Command{
 						log.Println(res)
 						fmt.Println("Processing complete for CPUUtilization")
 					default:
-						log.Printf("Unsupported metric name: %s", metric.MetricName)
+						res, err := controller.GetMetricData(clientAuth, cloudWatchQueries)
+						if err != nil {
+							log.Println("Error getting metric data: %v", err)
+							return
+						}
+						log.Println(res)
 					}
 				}
 

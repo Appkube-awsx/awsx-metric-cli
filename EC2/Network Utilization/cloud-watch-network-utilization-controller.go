@@ -1,9 +1,9 @@
-package ec2
+package Network_Utilization
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Appkube-awsx/awsx-common/client"
+	"github.com/Appkube-awsx/awsx-metric-cli/client"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"strings"
@@ -35,7 +35,7 @@ type OuterQuery struct {
 	Query        []InnerQuery `json:"Query"`
 }
 
-func GetMetricData(clientAuth *client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
+func GetNerworkUtilizationMetricData(clientAuth *client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
 	var outerQuery []OuterQuery
 	err := json.Unmarshal([]byte(cloudWatchQueries), &outerQuery)
 	if err != nil {
