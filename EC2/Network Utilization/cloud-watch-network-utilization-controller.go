@@ -1,4 +1,4 @@
-package controller
+package Network_Utilization
 
 import (
 	"encoding/json"
@@ -20,7 +20,6 @@ type TimeRange struct {
 	To       string `json:"To"`
 	TimeZone string `json:"TimeZone"`
 }
-
 type InnerQuery struct {
 	Namespace  string      `json:"Namespace"`
 	MetricName string      `json:"MetricName"`
@@ -28,7 +27,6 @@ type InnerQuery struct {
 	Stat       string      `json:"Stat"`
 	Dimensions []Dimension `json:"Dimensions"`
 }
-
 type OuterQuery struct {
 	RefID        string       `json:"RefID"`
 	MaxDataPoint int          `json:"MaxDataPoint"`
@@ -37,24 +35,22 @@ type OuterQuery struct {
 	Query        []InnerQuery `json:"Query"`
 }
 
-func GetMetricData(clientAuth *client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
+func GetNerworkUtilizationMetricData(clientAuth *client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
 	var outerQuery []OuterQuery
 	err := json.Unmarshal([]byte(cloudWatchQueries), &outerQuery)
 	if err != nil {
 		fmt.Println("Error parsing JSON input:", err)
 		return nil, err
 	}
-
 	// Create the metric queries dynamically
-	queries := make([]*cloudwatch.MetricDataQuery, len(outerQuery))
+	queries := make([]*cloudwatch.MetricDataQuery, 0)
 	for i, outerQueryInput := range outerQuery {
 		for _, queryInput := range outerQueryInput.Query {
 			if queryInput.Dimensions == nil {
 				queryInput.Dimensions = make([]Dimension, 0)
 			}
-
 			query := &cloudwatch.MetricDataQuery{
-				Id:         aws.String(strings.ToLower(outerQueryInput.RefID)),
+				Id:         aws.String(strings.ToLower(fmt.Sprintf("%s_%d", outerQueryInput.RefID, i))),
 				ReturnData: aws.Bool(true),
 				MetricStat: &cloudwatch.MetricStat{
 					Metric: &cloudwatch.Metric{
@@ -64,95 +60,76 @@ func GetMetricData(clientAuth *client.Auth, cloudWatchQueries string) (*cloudwat
 					},
 					Period: aws.Int64(queryInput.Period),
 					Stat:   aws.String(queryInput.Stat),
+					Unit:   aws.String("Bytes"),
 				},
 			}
-			queries[i] = query
+			queries = append(queries, query)
 		}
 	}
-
 	cloudWatchClient := client.GetClient(*clientAuth, client.CLOUDWATCH).(*cloudwatch.CloudWatch)
-
 	// Specify the request input with multiple queries
 	input := &cloudwatch.GetMetricDataInput{
 		MetricDataQueries: queries,
 		StartTime:         aws.Time(time.Now().Add(time.Duration(-1) * time.Hour)),
 		EndTime:           aws.Time(time.Now()),
 	}
-
 	// Make the request to CloudWatch
 	result, err := cloudWatchClient.GetMetricData(input)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return nil, err
 	}
-
-	// Process the result
+	var inbound, outbound float64
 	for _, metricDataResult := range result.MetricDataResults {
-		for i, timestamp := range metricDataResult.Timestamps {
-			fmt.Printf("Data for Metric at Timestamp %v: %f\n", *timestamp, *metricDataResult.Values[i])
+		switch *metricDataResult.Label {
+		case "NetworkIn":
+			processMetricData("NetworkIn", metricDataResult, &inbound)
+		case "NetworkOut":
+			processMetricData("NetworkOut", metricDataResult, &outbound)
+		default:
+			fmt.Printf("Unknown metric label: %v\n", *metricDataResult.Label)
 		}
 	}
 
+	inboundBytes := inbound
+	outboundBytes := outbound
+	// Output the result
+	//fmt.Printf("{ Inbound: %v, Outbound: %v, DataTransfer: %v }\n", inbound, outbound, inbound+outbound)
+
+	fmt.Printf("{ Inbound: %.2f Bytes, Outbound: %.2f Bytes, DataTransfer: %.2f Bytes }\n", inboundBytes, outboundBytes, inboundBytes+outboundBytes)
+	//for _, metricDataResult := range result.MetricDataResults {
+	// // Assuming you are interested in NetworkIn metric
+	// if len(metricDataResult.Values) > 0 {
+	//    inbound := *metricDataResult.Values[0]
+	//    outbound := 0.0 // Assume outbound is not available in the response
+	//    dataTransfer := inbound + outbound
+	//
+	//    fmt.Printf("{ Inbound: %v, Outbound: %v, DataTransfer: %v }\n", inbound, outbound, dataTransfer)
+	// } else {
+	//    fmt.Println("No data available for NetworkIn")
+	// }
+	// if *metricDataResult.Label == "NetworkIn" {
+	//    for i, timestamp := range metricDataResult.Timestamps {
+	//       fmt.Printf("Data for NetworkIn at Timestamp %v: %f\n", *timestamp, *metricDataResult.Values[i])
+	//    }
+	//
+	// }
+	//}
 	return result, nil
 }
-
-func GetMetricDataWithSingleQuery(clientAuth *client.Auth, cloudWatchQueries string) (*cloudwatch.GetMetricDataOutput, error) {
-	var outerQuery OuterQuery
-	err := json.Unmarshal([]byte(cloudWatchQueries), &outerQuery)
-	if err != nil {
-		fmt.Println("Error parsing JSON input:", err)
-		return nil, err
+func processMetricData(metricLabel string, metricDataResult *cloudwatch.MetricDataResult, value *float64) {
+	fmt.Printf("Data for %s at Timestamps:\n", metricLabel)
+	for i, timestamp := range metricDataResult.Timestamps {
+		fmt.Printf("  Timestamp %v: %f\n", *timestamp, *metricDataResult.Values[i])
 	}
-
-	// Create the metric queries dynamically
-	queries := make([]*cloudwatch.MetricDataQuery, 1)
-	for _, queryInput := range outerQuery.Query {
-		if queryInput.Dimensions == nil {
-			queryInput.Dimensions = make([]Dimension, 0)
-		}
-
-		query := &cloudwatch.MetricDataQuery{
-			Id:         aws.String(strings.ToLower(outerQuery.RefID)),
-			ReturnData: aws.Bool(true),
-			MetricStat: &cloudwatch.MetricStat{
-				Metric: &cloudwatch.Metric{
-					Namespace:  aws.String(queryInput.Namespace),
-					MetricName: aws.String(queryInput.MetricName),
-					Dimensions: buildDimensions(queryInput.Dimensions),
-				},
-				Period: aws.Int64(queryInput.Period),
-				Stat:   aws.String(queryInput.Stat),
-			},
-		}
-		queries[0] = query
+	if len(metricDataResult.Values) > 0 {
+		// Corrected code: Dereference the pointer
+		*value = *metricDataResult.Values[0]
+		fmt.Printf("{ %s: %v }\n", metricLabel, *value)
+	} else {
+		fmt.Printf("No data available for %s\n", metricLabel)
 	}
-
-	cloudWatchClient := client.GetClient(*clientAuth, client.CLOUDWATCH).(*cloudwatch.CloudWatch)
-
-	// Specify the request input with multiple queries
-	input := &cloudwatch.GetMetricDataInput{
-		MetricDataQueries: queries,
-		StartTime:         aws.Time(time.Now().Add(time.Duration(-1) * time.Hour)),
-		EndTime:           aws.Time(time.Now()),
-	}
-
-	// Make the request to CloudWatch
-	result, err := cloudWatchClient.GetMetricData(input)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return nil, err
-	}
-
-	// Process the result
-	for _, metricDataResult := range result.MetricDataResults {
-		for i, timestamp := range metricDataResult.Timestamps {
-			fmt.Printf("Data for Metric at Timestamp %v: %f\n", *timestamp, *metricDataResult.Values[i])
-		}
-	}
-
-	return result, nil
 }
-
 func buildDimensions(dimensions []Dimension) []*cloudwatch.Dimension {
 	var cloudWatchDimensions []*cloudwatch.Dimension
 	for _, d := range dimensions {

@@ -19,9 +19,11 @@ go run .\main.go \
 - --crossAccountRoleArn: AWS IAM role ARN for cross-account access.
 - -cloudWatchQueries: JSON array of CloudWatch queries.
        mandatory paramters of cloudWatchQueries
-            1. Namespace
-            2. MetricName
-            3. Stat
+            1. RefID
+            2. Namespace
+            3. MetricName
+            4. Period
+            5. Stat
     
 ### Logic to get GLOBAL_AWS_SECRETS (access/secret key) in cli: 
         Since we are only passing crossAccountRoleArn, we need GLOBAL_AWS_SECRETS (access/secret key) from vault. It can be retrieved by two ways explaind below: 
