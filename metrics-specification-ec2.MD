@@ -1,4 +1,4 @@
-| S.No | Metric NameSpace      |                Output                              |      Units        |            Note                                                                                                         |
+| S.No | Panel Name      |                Output                              |      Units        |            Note                                                                                                         |
 |------|-----------------------|----------------------------------------------------|-------------------|-------------------------------------------------------------------------------------------------------------------------|
 | 1    | CPU Utilization       | Stat Average(5m), Average(24Hours), Maximum(24h)   |    Percentage(%)  | This is a cloudwatch metric                                                                                             |
 | 2    |  Memory Utilization   | Stat Average(5m), Avergae (24h), Maximum(24h)      |     Bytes         | This panel is fetched through cloudwatch agent / metrics.                                                               |
